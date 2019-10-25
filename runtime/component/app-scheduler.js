@@ -76,6 +76,10 @@ AppScheduler.prototype.appLauncher = {
   },
   default: function (appId, metadata, appBridge, mode, options) {
     return defaultLauncher(metadata.appHome, appBridge, mode, options)
+  },
+  hive: function (appId, metadata, appBridge, mode, options) {
+    var hiveLauncher = require('../app/hive-launcher')
+    return hiveLauncher(metadata.appHome, appBridge, mode, options)
   }
 }
 
@@ -84,6 +88,7 @@ AppScheduler.prototype.appLauncher = {
  * @param {string} appId
  * @param {object} [options]
  * @param {string | number} [options.mode] - app launch mode
+ * @param {'light' | 'exe' | 'hive' | 'default'} [options.type] - app type to be used
  * @param {string} [options.descriptorPath] - api descriptor file to be used
  * @param {string[]} [options.args] - additional execution arguments to the child process
  * @param {object} [options.environs] - additional execution environs to the child process
@@ -139,12 +144,12 @@ AppScheduler.prototype.createApp = function createApp (appId, options) {
 
   var appBridge = new AppBridge(this.runtime, appId, metadata)
   this.appMap[appId] = appBridge
-  appBridge.onExit = (code, signal) => {
+  appBridge.onExit = () => {
     if (this.appMap[appId] !== appBridge) {
       logger.info(`Not matched app on exiting, skip unset executor.app(${appId})`)
       return
     }
-    this.handleAppExit(appId, code, signal)
+    this.handleAppExit(appId)
   }
   var readyPromise = new Promise((resolve, reject) => {
     appBridge.onReady = (err) => {
@@ -190,10 +195,8 @@ AppScheduler.prototype.createApp = function createApp (appId, options) {
  *
  * @private
  * @param {string} appId
- * @param {number | undefined} code
- * @param {string | undefined} signal
  */
-AppScheduler.prototype.handleAppExit = function handleAppExit (appId, code, signal) {
+AppScheduler.prototype.handleAppExit = function handleAppExit (appId) {
   logger.info(`${appId} exited.`)
   /** incase bridge has not been marked as suspended */
   var app = this.appMap[appId]

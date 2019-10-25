@@ -138,7 +138,7 @@ class AppBridge {
     }
   }
 
-  didExit (code, signal) {
+  didExit () {
     if (this.exited) {
       this.logger.warn(`app(${this.appId}) might have been exited multiple times.`)
       return
@@ -147,7 +147,7 @@ class AppBridge {
     if (!this.ready) {
       this.didReady(new Error(`app(${this.appId}) exited before ready`))
     }
-    this.onExit(code, signal)
+    this.onExit()
   }
 }
 
