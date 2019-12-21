@@ -75,10 +75,11 @@ AppRuntime.prototype.init = function init () {
       return future
     }
 
-    /** 6. phase runtime to reset */
-    this.phaseToReset()
-    /** 7. open the setup url and wait for incoming `ready` call */
-    return this.openUrl('yoda-app://setup/init')
+    /**
+     * 6. phase runtime to reset
+     * open the setup url and wait for incoming `ready` call
+     */
+    return this.phaseToReset()
   })
 }
 
@@ -319,15 +320,6 @@ AppRuntime.prototype.appDidExit = function appDidExit (appId) {
 }
 
 /**
- * Reset the runtime to the reset state, it deactivates all running apps and
- * open the url "yoda-app://setup/reset".
- */
-AppRuntime.prototype.reset = function reset () {
-  return this.phaseToReset().then(
-    () => this.openUrl('yoda-app://setup/reset'))
-}
-
-/**
  * @private
  */
 AppRuntime.prototype.phaseToBooting = function phaseToBooting () {
@@ -348,9 +340,13 @@ AppRuntime.prototype.phaseToReady = function phaseToReady () {
 
 /**
  * @private
+ * Reset the runtime to the reset state, it deactivates all running apps and
+ * open the url "yoda-app://setup/reset".
  */
 AppRuntime.prototype.phaseToReset = function phaseToReset () {
-  this.component.flora.post('yodaos.runtime.phase', ['setup'], require('@yoda/flora').MSGTYPE_PERSIST)
-  this.component.broadcast.dispatch('yodaos.on-phase-reset', [])
-  return this.component.visibility.abandonAllVisibilities()
+  this.component.flora.post('yodaos.runtime.phase', ['reset'], require('@yoda/flora').MSGTYPE_PERSIST)
+  return Promise.resolve()
+    .then(() => this.component.visibility.abandonAllVisibilities())
+    .then(() => this.component.broadcast.dispatch('yodaos.on-phase-reset', []))
+    .then(() => this.openUrl('yoda-app://setup/init'))
 }
